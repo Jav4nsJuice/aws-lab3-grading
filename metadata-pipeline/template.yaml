@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Lab 3 - Asynchronous Metadata Pipeline
+
+Resources:
+  ImageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "ml-images-${AWS::AccountId}-${AWS::Region}"
+
+  ProcessingQueue:
+    Type: AWS::SQS::Queue
+
+  IngestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ingest_function/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Environment:
+        Variables:
+          QUEUE_URL: !Ref ProcessingQueue
+      Policies:
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt ProcessingQueue.QueueName
+      Events:
+        NewImage:
+          Type: S3
+          Properties:
+            Bucket: !Ref ImageBucket
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: incoming/
+
+  ExtractorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: extractor_function/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Sub "ml-images-${AWS::AccountId}-${AWS::Region}"
+        - S3WritePolicy:
+            BucketName: !Sub "ml-images-${AWS::AccountId}-${AWS::Region}"
+      Events:
+        QueueMessage:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt ProcessingQueue.Arn
+            BatchSize: 1
+
+Outputs:
+  BucketName:
+    Value: !Ref ImageBucket
