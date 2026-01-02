@@ -8,7 +8,6 @@ permissions:
 jobs:
   grade:
     runs-on: ubuntu-latest
-    # This sets the folder for the entire job
     defaults:
       run:
         working-directory: metadata-pipeline 
@@ -24,17 +23,18 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: us-east-2 # Match your deployment region
+          aws-region: us-east-2 
+
+      # CRITICAL: Python must be set up BEFORE sam build
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9' 
 
       - name: Build and Deploy
         run: |
           sam build
           sam deploy --stack-name coderoad-lab-3 --resolve-s3 --capabilities CAPABILITY_IAM --no-confirm-changeset
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.9' # Match your CloudShell environment
 
       - name: Run Tests
         run: |
