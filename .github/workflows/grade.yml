@@ -2,23 +2,29 @@ name: Lab 3 Grading
 on: [push]
 
 permissions:
-  id-token: write
-  contents: read
+  id-token: write   # Required for AWS OIDC
+  contents: read    # Required to read your code
 
 jobs:
   grade:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+    # This sets the folder for the entire job
+    defaults:
+      run:
+        working-directory: metadata-pipeline 
 
-      - name: Setup SAM
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup SAM CLI
         uses: aws-actions/setup-sam@v2
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: us-east-2 
+          aws-region: us-east-2 # Match your deployment region
 
       - name: Build and Deploy
         run: |
@@ -28,7 +34,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.9' # Match your CloudShell environment
 
       - name: Run Tests
         run: |
