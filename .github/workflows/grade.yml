@@ -34,7 +34,11 @@ jobs:
       - name: Build and Deploy
         run: |
           sam build
-          sam deploy --stack-name coderoad-lab-3 --resolve-s3 --capabilities CAPABILITY_IAM --no-confirm-changeset
+          sam deploy --stack-name coderoad-lab-3 \
+            --resolve-s3 \
+            --capabilities CAPABILITY_IAM \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset # Add this line
 
       - name: Run Tests
         run: |
