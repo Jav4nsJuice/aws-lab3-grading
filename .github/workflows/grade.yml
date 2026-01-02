@@ -41,6 +41,9 @@ jobs:
             --no-fail-on-empty-changeset # Add this line
 
       - name: Run Tests
+        working-directory: metadata-pipeline
         run: |
           pip install pytest boto3 Pillow
+          # Ensure assets directory is present before running
+          ls -R assets/ 
           pytest test_lab3.py
